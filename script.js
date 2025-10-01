@@ -60,7 +60,7 @@ function generateId() {
 function showPage(pageId) {
     const pages = document.querySelectorAll(".page");
     const mainNav = document.getElementById("main-nav");
-    const header = document.querySelector(".header");
+    const header = document.querySelector(".btn-entrar");
     
     // Check if user is trying to access protected pages without authentication
     const protectedPages = ["dashboard", "my-exercises", "create-exercise", "my-workouts", "create-workout", "library", "profile"];

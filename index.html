@@ -12,24 +12,13 @@
     <div id="notification-container" class="notification-container"></div>
 
     <!-- Header (Landing Page) -->
-    <header class="header" id="header">
-        <div class="container header-content">
-            <a href="#home" class="logo">
-                <i class="fas fa-dumbbell logo-icon"></i>
-                My<span class="logo-text">Dumbbell</span>
-            </a>
-            <nav>
-                <a href="#login" class="nav-link">Entrar</a>
-            </nav>
-        </div>
-    </header>
 
     <!-- Main Navigation (Authenticated Users) -->
     <nav class="main-nav hidden" id="main-nav">
         <div class="nav-container">
-            <a href="#dashboard" class="nav-brand">
+            <a href="#home" class="nav-brand">
                 <i class="fas fa-dumbbell logo-icon"></i>
-                My<span class="logo-text">Dumbbell</span>
+                My Dumbbell</span>
             </a>
             <div class="nav-links">
                 <a href="#dashboard" class="nav-link">Dashboard</a>
@@ -39,6 +28,9 @@
                 <a href="#create-workout" class="nav-link">Criar Treino</a>
                 <a href="#library" class="nav-link">Biblioteca</a>
                 <a href="#profile" class="nav-link">Perfil</a>
+                <div class="btn-entrar" id="btn-entrar" style="margin-left: 1rem;">
+                            <a href="#login" class="btn btn-secondary nav-link">Entrar</a>
+                </div>
                 <button onclick="logout()" class="btn btn-secondary nav-link" style="margin-left: 1rem;">Sair</button>
             </div>
         </div>
@@ -56,7 +48,7 @@
                     <a href="#login" class="btn btn-primary btn-large" id="start-now">
                         Começar Agora <i class="fas fa-arrow-right btn-icon"></i>
                     </a>
-                    <a href="" class="btn btn-secondary btn-large">Saiba Mais <i class="fas fa-book-open btn-icon"></i></a>
+                    <a href="#" class="btn btn-secondary btn-large">Saiba Mais <i class="fas fa-book-open btn-icon"></i></a>
                 </div>
             </div>
         </div>
