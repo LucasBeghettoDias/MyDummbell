@@ -65,6 +65,7 @@ function mostrarPagina(idPagina) {
     // Verifica se o usuário está tentando acessar páginas protegidas sem autenticação
     const paginasProtegidas = ["painel", "meus-exercicios", "criar-exercicio", "meus-treinos", "criar-treino", "biblioteca", "perfil"];
     if (paginasProtegidas.includes(idPagina) && !EstadoApp.usuarioAtual) {
+        // toast erro =====>
         mostrarNotificacao("Você precisa fazer login para acessar esta página", "error");
         mostrarPagina("login");
         return;
@@ -133,7 +134,8 @@ function mostrarNotificacao(mensagem, tipo = "success") {
                 notificacao.parentNode.removeChild(notificacao);
             }
         }, 300);
-    }, 3000);
+        // tempo toast ======>
+    }, 5000);
 }
 
 function mostrarErroAutenticacao(mensagem) {
@@ -291,6 +293,7 @@ function iniciarAutenticacao() {
                 // Verifica se o usuário já existe
                 const usuarioExistente = EstadoApp.usuariosRegistrados.find(usuario => usuario.email === email);
                 if (usuarioExistente) {
+                    // toast email cadastrado =====>
                     mostrarErroAutenticacao("Este email já está cadastrado");
                     return;
                 }
@@ -308,7 +311,7 @@ function iniciarAutenticacao() {
                 
                 EstadoApp.usuariosRegistrados.push(novoUsuario);
                 salvarNoLocalStorage("mydumbbell_users", EstadoApp.usuariosRegistrados);
-                
+                // toast registro =====>
                 mostrarNotificacao("Registro realizado com sucesso! Faça login para continuar.");
                 alternarModoAutenticacao(); // Volta para o modo login
                 
@@ -321,7 +324,7 @@ function iniciarAutenticacao() {
                     EstadoApp.exercicios = usuario.exercicios || [];
                     EstadoApp.treinos = usuario.treinos || [];
                     localStorage.setItem("mydumbbell_current_user", JSON.stringify(usuario));
-                    
+                    // toast bem vindo ======>
                     mostrarNotificacao(`Bem-vindo de volta, ${usuario.nome.split(" ")[0]}!`);
                     mostrarPagina("painel");
                 } else {
