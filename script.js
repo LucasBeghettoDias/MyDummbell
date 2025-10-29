@@ -1,9 +1,17 @@
-// Gerenciamento de estado global
+// substituir inicialização original por tentativa de carregar backup JS (se existir)
+const _initialBackup = window.MYDUMBBELL_DATA ? window.MYDUMBBELL_DATA : (function () {
+    try {
+        return JSON.parse(localStorage.getItem("mydumbbell_data") || "{}");
+    } catch (e) {
+        return {};
+    }
+})();
+
 const EstadoApp = {
     usuarioAtual: null,
-    usuariosRegistrados: JSON.parse(localStorage.getItem("mydumbbell_users") || "[]"),
-    exercicios: JSON.parse(localStorage.getItem("mydumbbell_exercises") || "[]"),
-    treinos: JSON.parse(localStorage.getItem("mydumbbell_workouts") || "[]"),
+    usuariosRegistrados: _initialBackup.usuariosRegistrados || JSON.parse(localStorage.getItem("mydumbbell_users") || "[]"),
+    exercicios: _initialBackup.exercicios || JSON.parse(localStorage.getItem("mydumbbell_exercises") || "[]"),
+    treinos: _initialBackup.treinos || JSON.parse(localStorage.getItem("mydumbbell_workouts") || "[]"),
     treinosBiblioteca: [
         {
             id: 1,
@@ -48,10 +56,7 @@ const EstadoApp = {
     ]
 };
 
-// Funções utilitárias
-function salvarNoLocalStorage(chave, dados) {
-    localStorage.setItem(chave, JSON.stringify(dados));
-}
+
 
 function gerarId() {
     return Date.now() + Math.random().toString(36).substr(2, 9);
@@ -129,13 +134,13 @@ function mostrarNotificacao(mensagem, tipo = "success") {
     
     setTimeout(() => {
         notificacao.style.animation = "slideOut 0.3s ease-in forwards";
-        setTimeout(() => {
+        setTimeout(() => { 
             if (notificacao.parentNode) {
                 notificacao.parentNode.removeChild(notificacao);
             }
         }, 300);
         // tempo toast ======>
-    }, 5000);
+    }, 3000);
 }
 
 function mostrarErroAutenticacao(mensagem) {
@@ -395,11 +400,14 @@ function iniciarGerenciamentoExercicios() {
             EstadoApp.exercicios.push(novoExercicio);
             
             // Atualiza os dados do usuário nos usuários registrados
-            const indiceUsuario = EstadoApp.usuariosRegistrados.findIndex(u => u.id === EstadoApp.usuarioAtual.id);
+            const indiceUsuario = EstadoApp.usuariosRegistrados.findIndex(u => u.id === EstadoApp.usuarioAtual?.id);
             if (indiceUsuario !== -1) {
                 EstadoApp.usuariosRegistrados[indiceUsuario].exercicios = EstadoApp.exercicios;
                 salvarNoLocalStorage("mydumbbell_users", EstadoApp.usuariosRegistrados);
             }
+
+            // <-- SALVA A CHAVE GLOBAL DE EXERCÍCIOS PARA PERSISTÊNCIA -->
+            salvarNoLocalStorage("mydumbbell_exercises", EstadoApp.exercicios);
             
             mostrarNotificacao("Exercício criado com sucesso!");
             formCriarExercicio.reset();
@@ -446,16 +454,22 @@ function excluirExercicio(idExercicio) {
         
         // Remove o exercício dos treinos
         EstadoApp.treinos.forEach(treino => {
-            treino.exercises = treino.exercises.filter(ex => ex.id !== idExercicio);
+            treino.exercises = treino.exercises ? treino.exercises.filter(ex => ex.id !== idExercicio) : treino.exercicios ? treino.exercicios.filter(ex => ex.id !== idExercicio) : [];
+            // compatibilidade com nomes diferentes
+            treino.exercicios = treino.exercises || treino.exercicios || [];
         });
         
         // Atualiza os dados do usuário nos usuários registrados
-        const indiceUsuario = EstadoApp.usuariosRegistrados.findIndex(u => u.id === EstadoApp.usuarioAtual.id);
+        const indiceUsuario = EstadoApp.usuariosRegistrados.findIndex(u => u.id === EstadoApp.usuarioAtual?.id);
         if (indiceUsuario !== -1) {
             EstadoApp.usuariosRegistrados[indiceUsuario].exercicios = EstadoApp.exercicios;
             EstadoApp.usuariosRegistrados[indiceUsuario].treinos = EstadoApp.treinos;
             salvarNoLocalStorage("mydumbbell_users", EstadoApp.usuariosRegistrados);
         }
+
+        // <-- SALVA AS CHAVES GLOBAIS PARA PERSISTÊNCIA -->
+        salvarNoLocalStorage("mydumbbell_exercises", EstadoApp.exercicios);
+        salvarNoLocalStorage("mydumbbell_workouts", EstadoApp.treinos);
         
         atualizarMeusExercicios();
         atualizarPainel();
@@ -516,11 +530,14 @@ function iniciarGerenciamentoTreinos() {
             EstadoApp.treinos.push(novoTreino);
             
             // Atualiza os dados do usuário nos usuários registrados
-            const indiceUsuario = EstadoApp.usuariosRegistrados.findIndex(u => u.id === EstadoApp.usuarioAtual.id);
+            const indiceUsuario = EstadoApp.usuariosRegistrados.findIndex(u => u.id === EstadoApp.usuarioAtual?.id);
             if (indiceUsuario !== -1) {
                 EstadoApp.usuariosRegistrados[indiceUsuario].treinos = EstadoApp.treinos;
                 salvarNoLocalStorage("mydumbbell_users", EstadoApp.usuariosRegistrados);
             }
+
+            // <-- SALVA A CHAVE GLOBAL DE TREINOS PARA PERSISTÊNCIA -->
+            salvarNoLocalStorage("mydumbbell_workouts", EstadoApp.treinos);
             
             mostrarNotificacao("Treino criado com sucesso!");
             formCriarTreino.reset();
@@ -649,7 +666,7 @@ function atualizarMeusTreinos() {
                 <span style="margin-right: 1rem;">🕒 ${treino.duracao}min</span>
                 <span>🏋️ ${treino.exercicios ? treino.exercicios.length : 0} ex.</span>
             </div>
-            <div style="font-size: var(--font-size-sm); color: var(--primary-600); margin-bottom: 0.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: var(--font-size-sm); color: var(--gray-500); margin-bottom: 0.5rem;">
                 <span>📅 ${treino.dia || 'Não Agendado'} às ${treino.hora || 'N/A'}</span>
             </div>
             <div style="display: flex; justify-content: space-between; align-items: center; font-size: var(--font-size-sm); color: var(--gray-500);">
@@ -665,11 +682,14 @@ function excluirTreino(idTreino) {
         EstadoApp.treinos = EstadoApp.treinos.filter(t => t.id !== idTreino);
         
         // Atualiza os dados do usuário nos usuários registrados
-        const indiceUsuario = EstadoApp.usuariosRegistrados.findIndex(u => u.id === EstadoApp.usuarioAtual.id);
+        const indiceUsuario = EstadoApp.usuariosRegistrados.findIndex(u => u.id === EstadoApp.usuarioAtual?.id);
         if (indiceUsuario !== -1) {
             EstadoApp.usuariosRegistrados[indiceUsuario].treinos = EstadoApp.treinos;
             salvarNoLocalStorage("mydumbbell_users", EstadoApp.usuariosRegistrados);
         }
+
+        // <-- SALVA A CHAVE GLOBAL DE TREINOS -->
+        salvarNoLocalStorage("mydumbbell_workouts", EstadoApp.treinos);
         
         atualizarMeusTreinos();
         atualizarPainel();
@@ -723,11 +743,14 @@ function adicionarTreinoAosMeusTreinos(idTreino) {
     EstadoApp.treinos.push(novoTreinoUsuario);
     
     // Atualiza os dados do usuário nos usuários registrados
-    const indiceUsuario = EstadoApp.usuariosRegistrados.findIndex(u => u.id === EstadoApp.usuarioAtual.id);
+    const indiceUsuario = EstadoApp.usuariosRegistrados.findIndex(u => u.id === EstadoApp.usuarioAtual?.id);
     if (indiceUsuario !== -1) {
         EstadoApp.usuariosRegistrados[indiceUsuario].treinos = EstadoApp.treinos;
         salvarNoLocalStorage("mydumbbell_users", EstadoApp.usuariosRegistrados);
     }
+
+    // <-- SALVA A CHAVE GLOBAL DE TREINOS -->
+    salvarNoLocalStorage("mydumbbell_workouts", EstadoApp.treinos);
     
     mostrarNotificacao(`Treino "${treinoOriginal.nome}" adicionado aos seus treinos!`);
     mostrarPagina("meus-treinos");
@@ -749,14 +772,86 @@ function atualizarPerfilUsuario() {
     document.getElementById("conteudo-publico-perfil").textContent = conteudoPublico;
 }
 
+// Funções para exportar/importar arquivo JS
+function exportarDadosParaArquivo() {
+    if (window.Storage && Storage.exportToJSFile) {
+        Storage.exportToJSFile(EstadoApp);
+        mostrarNotificacao("Arquivo de dados gerado para download.");
+    } else {
+        mostrarNotificacao("Export não disponível neste navegador.", "error");
+    }
+}
+
+function abrirImportadorDeArquivo() {
+    const input = document.getElementById("import-file");
+    if (input) input.click();
+}
+
+function tratarArquivoImportado(file) {
+    if (!file) return;
+    if (window.Storage && Storage.importFromFile) {
+        Storage.importFromFile(file)
+            .then(data => {
+                // sobrescreve os arrays do EstadoApp com os dados importados (se existirem)
+                EstadoApp.usuariosRegistrados = data.usuariosRegistrados || EstadoApp.usuariosRegistrados;
+                EstadoApp.exercicios = data.exercicios || EstadoApp.exercicios;
+                EstadoApp.treinos = data.treinos || EstadoApp.treinos;
+
+                // salva no localStorage de suporte
+                salvarNoLocalStorage("mydumbbell_users", EstadoApp.usuariosRegistrados);
+                salvarNoLocalStorage("mydumbbell_exercises", EstadoApp.exercicios);
+                salvarNoLocalStorage("mydumbbell_workouts", EstadoApp.treinos);
+
+                mostrarNotificacao("Dados importados com sucesso!");
+                atualizarConteudoPagina(window.location.hash.substring(1) || "inicio");
+            })
+            .catch(err => {
+                console.error(err);
+                mostrarNotificacao("Falha ao importar arquivo.", "error");
+            });
+    } else {
+        mostrarNotificacao("Import não disponível neste navegador.", "error");
+    }
+}
+
+// Função para salvar no storage (usa module Storage se presente)
+function salvarNoLocalStorage(chave, dados) {
+    try {
+        if (window.Storage && typeof Storage.saveToLocalStorage === 'function') {
+            Storage.saveToLocalStorage(chave, dados);
+        } else {
+            localStorage.setItem(chave, JSON.stringify(dados));
+        }
+    } catch (err) {
+        console.error("Erro ao salvar no storage:", err);
+    }
+}
+
+// Atualiza o registro do usuário atual dentro de EstadoApp.usuariosRegistrados e no localStorage
+function sincronizarUsuarioAtualStorage() {
+    if (!EstadoApp.usuarioAtual) return;
+    const idx = EstadoApp.usuariosRegistrados.findIndex(u => u.id === EstadoApp.usuarioAtual.id);
+    if (idx !== -1) {
+        EstadoApp.usuariosRegistrados[idx].exercicios = EstadoApp.exercicios;
+        EstadoApp.usuariosRegistrados[idx].treinos = EstadoApp.treinos;
+        salvarNoLocalStorage("mydumbbell_users", EstadoApp.usuariosRegistrados);
+        // também atualiza a sessão atual
+        try {
+            localStorage.setItem("mydumbbell_current_user", JSON.stringify(EstadoApp.usuariosRegistrados[idx]));
+        } catch (e) {
+            console.warn("Não foi possível atualizar mydumbbell_current_user:", e);
+        }
+    }
+}
+
 // Inicialização
 document.addEventListener("DOMContentLoaded", () => {
     iniciarNavegacao();
     iniciarAutenticacao();
     iniciarGerenciamentoExercicios();
     iniciarGerenciamentoTreinos();
-    
-    // Adiciona a função mostrarPagina ao escopo global para o onclick no HTML
+
+    // Expor funções para botões
     window.mostrarPagina = mostrarPagina;
     window.sair = sair;
     window.excluirExercicio = excluirExercicio;
@@ -764,4 +859,9 @@ document.addEventListener("DOMContentLoaded", () => {
     window.removerExercicioDoTreino = removerExercicioDoTreino;
     window.excluirTreino = excluirTreino;
     window.adicionarTreinoAosMeusTreinos = adicionarTreinoAosMeusTreinos;
+
+    // Funções export/import
+    window.exportarDadosParaArquivo = exportarDadosParaArquivo;
+    window.abrirImportadorDeArquivo = abrirImportadorDeArquivo;
+    window.tratarArquivoImportado = tratarArquivoImportado;
 });

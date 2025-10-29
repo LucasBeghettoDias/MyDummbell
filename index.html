@@ -498,10 +498,18 @@
 
     <footer>
         <div class="container">
-            <p class="footer-text">&copy; 2024 MyDumbbell. Todos os direitos reservados.</p>
+            <p class="footer-text">&copy; 2025 MyDumbbell. Todos os direitos reservados.</p>
+            <!-- Export / Import -->
+            <div style="margin-top: 0.5rem;">
+                <button type="button" class="btn btn-secondary" onclick="exportarDadosParaArquivo()">Exportar Dados (.js)</button>
+                <button type="button" class="btn btn-secondary" onclick="abrirImportadorDeArquivo()">Importar Dados (.js)</button>
+                <input type="file" id="import-file" accept=".js,application/javascript,application/json" style="display:none"
+                       onchange="(function(e){ const f = e.target.files && e.target.files[0]; tratarArquivoImportado(f); e.target.value=''; })(event)">
+            </div>
         </div>
     </footer>
 
+    <script src="storage.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
